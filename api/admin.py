@@ -1,3 +1,5 @@
 from django.contrib import admin
+from .models import Profile
 
-# Register your models here.
+''' adminDashbord にProfileモデルを表示、操作する。 '''
+admin.site.register(Profile)

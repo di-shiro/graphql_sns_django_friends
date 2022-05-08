@@ -13,7 +13,7 @@ class Profile(models.Model): # Profileモデル
         related_name='profiles_friends',    # Userモデルからfriend関係にあるUserにアクセスできる。
         blank=True
     )
-    friends_requests = models.ManyToManyField(
+    friend_requests = models.ManyToManyField(
         User,
         related_name='profiles_friend_requests',
         blank=True

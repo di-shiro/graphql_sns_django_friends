@@ -61,8 +61,8 @@ GRAPHQL_JWT = {
 }
 # 追加
 CORS_ORIGIN_WHITELIST = [
-    "http://localhost:3000,"
-    "http://localhost:3001,"
+    "http://localhost:3000",
+    "http://localhost:3001"
 ]
 # 追加
 AUTHENTICATION_BACKENDS = [
