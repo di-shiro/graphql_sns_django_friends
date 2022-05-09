@@ -89,8 +89,8 @@ class ProfileUpdateMutation(relay.ClientIDMutation):
                 friend_requests_object = User.objects.get(id=friend_requests_id)
                 friend_requests_set.append(friend_requests_object)
             profile.friend_requests.set(friend_requests_set)    # React側から受け取ったfriend_requestsリストでDBを更新
-
-            return ProfileUpdateMutation(profile=profile)
+        profile.save()
+        return ProfileUpdateMutation(profile=profile)
 
 
 ''' Mutationを定義して使えるようにしておく '''
