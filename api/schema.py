@@ -5,7 +5,7 @@ import graphql_jwt
 from graphene_django.filter import DjangoFilterConnectionField
 from graphene import relay
 from graphql_jwt.decorators import login_required
-from .models import Profile
+from .models import Profile, Message
 from graphql_relay import from_global_id
 
 
@@ -22,6 +22,15 @@ class ProfileNode(DjangoObjectType):
         model = Profile
         filter_fields = {
             'user_prof__username': ['icontains'],
+        }
+        interfaces = (relay.Node,)
+
+class MessageNode(DjangoObjectType):    # Direct Message
+    class Meta:
+        model = Message
+        filter_fields = {
+            'sender': ['exact'],
+            'receiver': ['exact'],
         }
         interfaces = (relay.Node,)
 
@@ -43,6 +52,24 @@ class CreateUserMutation(relay.ClientIDMutation):
         user.save()
 
         return CreateUserMutation(user=user)
+
+class MessageCreateMutation(relay.ClientIDMutation):    # Direct Massage
+    class Input:    # React側から受け取るデータ
+        message = graphene.String(required=True)    # DMの文章
+        receiver = graphene.ID(required=True)       # DMを受け取る側のUserのID
+
+    message = graphene.Field(MessageNode)   # Messageのフィールドを作成
+
+    @login_required     # Messageの具体的な処理
+    def mutation_and_get_payload(root, info, **input):
+        message = Message(
+            message=input.get('message'),
+            sender_id=info.context.user.id,     # ログインUserのID
+            receiver_id=from_global_id(input.get('receiver'))[1]    # 上の class Input: で受け取ったDM受信相手UserのID
+        )
+        message.save()
+        return MessageCreateMutation(message=message)
+
 
 ''' 新規Profileを作成 '''
 class ProfileCreateMutation(relay.ClientIDMutation):
@@ -99,15 +126,16 @@ class Mutation(graphene.AbstractType):
     token_auth = graphql_jwt.ObtainJSONWebToken.Field()
     create_profile = ProfileCreateMutation.Field()
     update_profile = ProfileUpdateMutation.Field()
+    create_message = MessageCreateMutation.Field()      # Direct Message
 
 ''' Queryを定義して使えるようにしておく '''
 class Query(graphene.ObjectType):
     profile = graphene.Field(ProfileNode)
     all_users = DjangoFilterConnectionField(UserNode)
     all_profiles = DjangoFilterConnectionField(ProfileNode)
+    all_messages = DjangoFilterConnectionField(MessageNode)     # Direct Message
 
-
-    ''' 具体的な処理であるResolverの３つの関数 '''
+    ''' Resolverの関数: 上記４つの具体的な処理。 '''
     @login_required
     def resolve_profile(self, info, **kwargs):
         return Profile.objects.get(user_prof=info.context.user.id)
@@ -119,6 +147,10 @@ class Query(graphene.ObjectType):
     @login_required
     def resolve_all_profiles(self, info, **kwargs):
         return Profile.objects.all()
+
+    @login_required
+    def resolve_all_messages(self, info, **kwargs):
+        return Message.objects.all()
 
 
 

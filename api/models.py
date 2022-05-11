@@ -24,3 +24,21 @@ class Profile(models.Model): # Profileモデル
     def __str__(self):
         return self.user_prof.username
 
+
+class Message(models.Model):
+    message = models.CharField(max_length=140)
+    # DM送付User
+    sender = models.ForeignKey(
+        User,
+        related_name='message_sender',  #
+        on_delete=models.CASCADE
+    )
+    # DM受信側User
+    receiver = models.ForeignKey(
+        User,
+        related_name='message_receiver',    #
+        on_delete=models.CASCADE
+    )
+
+    def __str__(self):
+        return str(self.id)
